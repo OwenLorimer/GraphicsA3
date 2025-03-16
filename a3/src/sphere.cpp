@@ -18,7 +18,6 @@ float Sphere::distToSphere( Sphere &otherSphere )
 // Return the distance between 'this' sphere and 'rectangle'.  Also
 // set 'closestPoint' to the point on the rectangle that is closest to
 // the sphere.
-
 float Sphere::distToRectangle( Rectangle &rectangle, vec3 *closestPoint )
 
 {
@@ -37,13 +36,66 @@ float Sphere::distToRectangle( Rectangle &rectangle, vec3 *closestPoint )
   // find the closestPoint and the distance.
 
   // [YOUR CODE HERE: REPLACE THE CODE BELOW]
-
-  if ( true ) { 
-
-    *closestPoint = vec3(1,1,0);
-      
-    return 9999;
+  float xDim = rectangle.xDim/2;
+  float yDim = rectangle.yDim/2;
+  if (sphereCentre.x >= -xDim && sphereCentre.x <= xDim && sphereCentre.y >= -yDim && sphereCentre.y <= yDim) { 
+    *closestPoint = vec3(sphereCentre.x, sphereCentre.y, 0);
+    float distance = fabs(sphereCentre.z) - this->radius;
+    return std::max(0.0f, distance);
   }
+
+  // [END OF YOUR CODE ABOVE]
+
+  // Determine the distance to each edge, named Xplus, Xminus, Yplus, Yminus below.
+  //
+  // Xplus has y = xDim/2, Xminus has y = -xDim/2, Yplus has x = yDim/2, Yminus has x = -yDim/2.
+  //
+  // For example, the Xplus edge goes from (xDim/2, -yDim/2, 0) to (xDim/2, yDim/2, 0).
+  //
+  // Call pointToEdgeDistance(...) in linalg.cpp to compute the
+  // distances to each edge, and the closest point on each edge.
+
+  vec3 pointXplus, pointYplus, pointXminus, pointYminus; // closest points
+
+  float distXplus, distYplus, distXminus, distYminus; // closest distances
+
+
+  // [YOUR CODE HERE]
+  distXplus = pointToEdgeDistance(sphereCentre, vec3(xDim, -yDim, 0), vec3(xDim, yDim, 0), &pointXplus);
+  distXminus = pointToEdgeDistance(sphereCentre, vec3(-xDim, -yDim, 0), vec3(-xDim, yDim, 0), &pointXminus);
+  distYplus = pointToEdgeDistance(sphereCentre, vec3(-xDim, yDim, 0), vec3(xDim, yDim, 0), &pointYplus);
+  distYminus = pointToEdgeDistance(sphereCentre, vec3(-xDim, -yDim, 0), vec3(xDim, -yDim, 0), &pointYminus);
+  
+  // Pick the minimum of the edge distances
+  
+  float min = distXplus;
+  vec3  pt  = pointXplus;
+  
+  if (distYplus < min) {
+    min = distYplus;
+    pt = pointYplus;
+  }
+
+  if (distXminus < min) {
+    min = distXminus;
+    pt = pointXminus;
+  }
+
+  if (distYminus < min) {
+    min = distYminus;
+    pt = pointYminus;
+  }
+
+  // Move 'pt', which is in the rectangle's coordinate system, back to
+  // the WCS and store it as 'closestPoint'.  Return the distance from
+  // the edge to the sphere surface.
+  
+ // [YOUR CODE HERE: REPLACE THE CODE BELOW]
+
+  *closestPoint = (rectangle.OCS_to_WCS() * vec4(pt, 1.0)).toVec3();
+
+  return std::max(0.0f, min - this->radius);
+}
 
   // [END OF YOUR CODE ABOVE]
 
